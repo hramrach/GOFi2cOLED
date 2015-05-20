@@ -73,14 +73,14 @@ void loop() {
 
   GOFoled.setCursor(14,56);
   GOFoled.print("www.geekonfire.com"); 
-  GOFoled.drawBitmap(48, 16, heart1, 32, 32, WHITE);  //draw heart1 bitmap.
+  GOFoled.drawBitmap(48, 12, heart1, 32, 32, WHITE);  //draw heart1 bitmap.
   GOFoled.display();
   delay(500);  
   GOFoled.clearDisplay();
   
   GOFoled.setCursor(14,56);
   GOFoled.print("www.geekonfire.com");   
-  GOFoled.drawBitmap(36, 4, heart2, 56, 56, WHITE);  //draw heart2 bitmap.
+  GOFoled.drawBitmap(36, 0, heart2, 56, 56, WHITE);  //draw heart2 bitmap.
   GOFoled.display();
   delay(500);  
   GOFoled.clearDisplay();  
