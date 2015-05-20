@@ -55,14 +55,21 @@ const unsigned char PROGMEM heart2[]={
 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 };
+ 
+#ifdef __AVR_ATtiny85__
+// Connect a LED to this Pin. It might be different in different ATtiny micro controllers
+int led = 1;
+#else
+int led = 13;
+#endif
   
 void setup()   {                  
+  pinMode(led, OUTPUT);     
   //default address is 0x3D.
-  GOFoled.init(0x3D);
+  GOFoled.init(0x3C);
   // init done
   
   GOFoled.display(); // show splashscreen
-  delay(2000);
   GOFoled.clearDisplay();
 
   GOFoled.setTextSize(1);
@@ -75,14 +82,16 @@ void loop() {
   GOFoled.print("www.geekonfire.com"); 
   GOFoled.drawBitmap(48, 12, heart1, 32, 32, WHITE);  //draw heart1 bitmap.
   GOFoled.display();
-  delay(500);  
+  delay(3000);  
+  digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
   GOFoled.clearDisplay();
   
   GOFoled.setCursor(14,56);
   GOFoled.print("www.geekonfire.com");   
   GOFoled.drawBitmap(36, 0, heart2, 56, 56, WHITE);  //draw heart2 bitmap.
   GOFoled.display();
-  delay(500);  
+  delay(3000);  
+  digitalWrite(led, LOW);    // turn the LED off by making the voltage LOW
   GOFoled.clearDisplay();  
 }
 
