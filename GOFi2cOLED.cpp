@@ -19,8 +19,10 @@
 #include <util/delay.h>
 #include <stdlib.h>
 
-#include "Wire.h"
 #include "GOFi2cOLED.h"
+
+static uint16_t drawpos;
+static uint8_t drawdata;
 
 // a 5x7 font table
 const unsigned char  BasicFont[] PROGMEM = {
@@ -281,6 +283,7 @@ const unsigned char  BasicFont[] PROGMEM = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 
 };
 
+#ifndef __AVR_ATtiny85__
 //init GOF logo in buffer£¨this buffer map to the GDDRAM of SSD1306£©
 static uint8_t buffer[128 * 64 / 8] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -348,6 +351,7 @@ static uint8_t buffer[128 * 64 / 8] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
+#endif
 
 
 void GOFi2cOLED::init(uint8_t address)
@@ -411,10 +415,17 @@ void GOFi2cOLED::constructor(uint8_t w, uint8_t h) {
   textsize = 1;
   textcolor = textbgcolor = WHITE;  
   wrap = true;
+	  drawpos = 0;
+}
+static uint8_t readpixels(uint16_t offset)
+{
+	/* unfortunately, there is no way to read pixels from SSD1306 over i2c */
+	return 0;
 }
 
 // the most basic function, set a single pixel
 void GOFi2cOLED::drawPixel(uint8_t x, uint8_t y, uint8_t color) {
+		uint16_t new_drawpos;
   if ((x < 0) || (x >= width()) || (y < 0) || (y >= height()))
     return;
 
@@ -434,17 +445,30 @@ void GOFi2cOLED::drawPixel(uint8_t x, uint8_t y, uint8_t color) {
     break;
   }  
   // x is which column
+#ifdef __AVR_ATtiny85__
+  new_drawpos = x+ (y/8)*128;
+  if(new_drawpos != drawpos) {
+	  display();
+	  drawpos = new_drawpos;
+	  drawdata = readpixels(drawpos);
+  }
+  if (color == WHITE) 
+    drawdata |= _BV((y%8));  
+  else
+    drawdata &= ~_BV((y%8)); 
+#else
   if (color == WHITE) 
     buffer[x+ (y/8)*128] |= _BV((y%8));  
   else
     buffer[x+ (y/8)*128] &= ~_BV((y%8)); 
+#endif
 }
 
 void GOFi2cOLED::sendCommand(unsigned char command)
 {
   Wire.begin();                       //initialize I2C
   Wire.beginTransmission(SlaveAddress); // begin I2C communication
-#if defined(ARDUINO) && ARDUINO >= 100
+#if defined(ARDUINO) && ARDUINO >= 100 && !defined(__AVR_ATtiny85__)
   Wire.write(GOFi2cOLED_Command_Mode);	     // Set OLED Command mode
   Wire.write(command);
 #else
@@ -458,7 +482,7 @@ void GOFi2cOLED::sendData(unsigned char Data)
 {
   Wire.begin();                    //initialize I2C
   Wire.beginTransmission(SlaveAddress); // begin I2C transmission
-#if defined(ARDUINO) && ARDUINO >= 100
+#if defined(ARDUINO) && ARDUINO >= 100 && !defined(__AVR_ATtiny85__)
   Wire.write(GOFi2cOLED_Data_Mode);            // data mode
   Wire.write(Data);
 #else
@@ -493,16 +517,17 @@ void GOFi2cOLED::setPageMode()
 }
 
 void GOFi2cOLED::display(void) {
-  sendCommand(0x00 | 0x0);  // low col = 0
-  sendCommand(0x10 | 0x0);  // hi col = 0
-  sendCommand(0x40 | 0x0); // line #0
 
     // save I2C bitrate
 //    uint8_t twbrbackup = TWBR;
 //    TWBR = 12; // upgrade to 400KHz!
 
     // I2C
-    #if defined(ARDUINO) && ARDUINO >= 100
+#ifndef __AVR_ATtiny85__
+  sendCommand(0xb0 | 0x0); // line #0
+  sendCommand(0x00 | 0x0);  // low col = 0
+  sendCommand(0x10 | 0x0);  // hi col = 0
+    #if defined(ARDUINO) && ARDUINO >= 100 
     for (uint16_t i=0; i<(128*64/8); i++) 
     {
       // send a bunch of data in one xmission
@@ -517,12 +542,13 @@ void GOFi2cOLED::display(void) {
       Wire.endTransmission();
     }      
     #else
+
     for (uint16_t i=0; i<(128*64/8); i++) 
     {
       // send a bunch of data in one xmission
       Wire.beginTransmission(SlaveAddress);
       Wire.send(GOFi2cOLED_Data_Mode);            // data mode
-      for (uint8_t x=0; x<16; x++) 
+      for (uint8_t x=0; x<8; x++) 
       {
         Wire.send(buffer[i]);
         i++;
@@ -530,13 +556,37 @@ void GOFi2cOLED::display(void) {
       i--;
       Wire.endTransmission();
     }
+
     #endif    
+#else
+  sendCommand(0x00 | (drawpos & 0xf));  // low col
+  sendCommand(0x10 | ((drawpos>>4) & 7));  // hi col
+  sendCommand(0xb0 | (drawpos>>(7))); // line #
+  sendData(drawdata);
+#endif
 //    TWBR = twbrbackup;
 }
 
 void GOFi2cOLED::clearDisplay()
 {
+#ifdef __AVR_ATtiny85__
+  sendCommand(0xb0 | 0x0); // line #0
+  sendCommand(0x00 | 0x0);  // low col = 0
+  sendCommand(0x10 | 0x0);  // hi col = 0
+    for (uint16_t i=0; i<(128*64/8);) 
+    {
+      // send a bunch of data in one xmission
+      Wire.beginTransmission(SlaveAddress);
+      Wire.send(GOFi2cOLED_Data_Mode);            // data mode
+      for (uint8_t x=0; x<8 && i<(128*64/8); x++, i++) 
+      {
+        Wire.send(0);
+      }  
+      Wire.endTransmission();
+    }
+#else
   memset(buffer, 0, (128*64/8));
+#endif
 }
 
 void GOFi2cOLED::clearArea(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
@@ -548,8 +598,8 @@ void GOFi2cOLED::clearArea(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 void GOFi2cOLED::drawBitmap(uint8_t x, uint8_t y, 
 			      const uint8_t *bitmap, uint8_t w, uint8_t h,
 			      uint8_t color) {
-  for (uint8_t j=0; j<h; j++) {
     for (uint8_t i=0; i<w; i++ ) {
+  for (uint8_t j=0; j<h; j++) {
       if (pgm_read_byte(bitmap + i + (j/8)*w) & _BV(j%8)) {
 	drawPixel(x+i, y+j, color);
       }

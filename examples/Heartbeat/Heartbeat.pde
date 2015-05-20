@@ -10,7 +10,6 @@ Creat heartbeat animation.
  
  */
 
-#include <Wire.h>
 #include <GOFi2cOLED.h>
 #include <avr/pgmspace.h>
 

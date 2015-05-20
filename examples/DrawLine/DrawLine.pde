@@ -10,32 +10,9 @@
  
  */
 
-#include <Wire.h>
 #include <GOFi2cOLED.h>
 
 GOFi2cOLED GOFoled;
-
-void setup()   {                  
-  //default address is 0x3D.
-  GOFoled.init(0x3D);
-  // init done
-  
-  GOFoled.display(); // show splashscreen
-  delay(2000);
-  GOFoled.clearDisplay();
-  
-  lineTest();
-  
-  GOFoled.clearDisplay();
-  GOFoled.setTextSize(2);
-  GOFoled.setTextColor(WHITE);  
-  GOFoled.print("DONE");
-  GOFoled.display(); // show splashscreen  
-}
-
-void loop() {
-  
-}
 
 void lineTest() {  
   for (int i=0; i<GOFoled.width(); i+=4) {
@@ -80,4 +57,26 @@ void lineTest() {
     GOFoled.display();
   }
   delay(250);
+}
+
+void loop() {
+  
+}
+
+void setup()   {                  
+  //default address is 0x3D.
+  GOFoled.init(0x3D);
+  // init done
+  
+  GOFoled.display(); // show splashscreen
+  delay(2000);
+  GOFoled.clearDisplay();
+  
+  lineTest();
+  
+  GOFoled.clearDisplay();
+  GOFoled.setTextSize(2);
+  GOFoled.setTextColor(WHITE);  
+  GOFoled.print("DONE");
+  GOFoled.display(); // show splashscreen  
 }

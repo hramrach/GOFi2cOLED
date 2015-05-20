@@ -10,7 +10,6 @@
  
  */
 
-#include <Wire.h>
 #include <GOFi2cOLED.h>
 
 GOFi2cOLED GOFoled;
@@ -24,16 +23,6 @@ void setup()   {
   delay(2000);
   GOFoled.clearDisplay();
   
-}
-
-void loop() {
-  
-  drawcircleTest();
-  GOFoled.clearDisplay();
-  delay(2000);  
-  fillcircleTest();
-  GOFoled.clearDisplay();
-  delay(2000);  
 }
 
 void drawcircleTest(void) {
@@ -55,4 +44,14 @@ void fillcircleTest(void) {
     color=~color;
     delay(1000);
   }
+}
+
+void loop() {
+  
+  drawcircleTest();
+  GOFoled.clearDisplay();
+  delay(2000);  
+  fillcircleTest();
+  GOFoled.clearDisplay();
+  delay(2000);  
 }

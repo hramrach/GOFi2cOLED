@@ -24,7 +24,12 @@
 #include "Arduino.h"
 #else
 #include <WProgram.h>
-#include "Wire.h"
+#endif
+#ifdef __AVR_ATtiny85__
+#include <TinyWireM.h>
+#define Wire TinyWireM
+#else
+#include <Wire.h>
 #endif
 
 #define BLACK 0

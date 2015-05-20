@@ -12,7 +12,6 @@
  
  */
 
-#include <Wire.h>
 #include <GOFi2cOLED.h>
 
 GOFi2cOLED GOFoled;
