@@ -417,11 +417,6 @@ void GOFi2cOLED::constructor(uint8_t w, uint8_t h) {
   wrap = true;
 	  drawpos = 0;
 }
-static uint8_t readpixels(uint16_t offset)
-{
-	/* unfortunately, there is no way to read pixels from SSD1306 over i2c */
-	return 0;
-}
 
 // the most basic function, set a single pixel
 void GOFi2cOLED::drawPixel(uint8_t x, uint8_t y, uint8_t color) {
@@ -450,7 +445,7 @@ void GOFi2cOLED::drawPixel(uint8_t x, uint8_t y, uint8_t color) {
   if(new_drawpos != drawpos) {
 	  display();
 	  drawpos = new_drawpos;
-	  drawdata = readpixels(drawpos);
+          drawdata = 0;
   }
   if (color == WHITE) 
     drawdata |= _BV((y%8));  
@@ -584,6 +579,7 @@ void GOFi2cOLED::clearDisplay()
       }  
       Wire.endTransmission();
     }
+    drawdata = 0;
 #else
   memset(buffer, 0, (128*64/8));
 #endif
